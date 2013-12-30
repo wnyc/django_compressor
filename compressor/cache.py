@@ -94,21 +94,21 @@ def get_templatetag_cachekey(compressor, mode, kind):
         "templatetag.%s.%s.%s" % (compressor.cachekey, mode, kind))
 
 
-def get_mtime(filename):
+def get_mtime(filename, storage_server):
     if settings.COMPRESS_MTIME_DELAY:
         key = get_mtime_cachekey(filename)
         mtime = cache.get(key)
         if mtime is None:
-            mtime = os.path.getmtime(filename)
+            mtime = storage_server.modified_time(filename)
             cache.set(key, mtime, settings.COMPRESS_MTIME_DELAY)
         return mtime
     return os.path.getmtime(filename)
 
 
-def get_hashed_mtime(filename, length=12):
+def get_hashed_mtime(filename, storage_server, length=12):
     try:
         filename = os.path.realpath(filename)
-        mtime = str(int(get_mtime(filename)))
+        mtime = str(int(get_mtime(filename, storage_server)))
     except OSError:
         return None
     return get_hexdigest(mtime, length)

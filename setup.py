@@ -108,7 +108,7 @@ def find_package_data(where='.', package='',
     return out
 
 setup(
-    name="django_compressor",
+    name="wnyc_django_compressor",
     version=find_version("compressor", "__init__.py"),
     url='http://django-compressor.readthedocs.org/en/latest/',
     license='MIT',

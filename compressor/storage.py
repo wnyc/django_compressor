@@ -5,13 +5,17 @@ import os
 from datetime import datetime
 import time
 
+from django.core.cache import get_cache
 from django.core.files.storage import FileSystemStorage, get_storage_class
 from django.utils.functional import LazyObject, SimpleLazyObject
+from cloudydict.django_storage import StorageFromSettings
 
+from hashlib import md5
 from compressor.conf import settings
 
+storage_cache = get_cache(getattr(settings, 'COMPRESSOR_CACHE_NAME', 'default'))
 
-class CompressorFileStorage(FileSystemStorage):
+class CompressorFileStorage(StorageFromSettings):
     """
     Standard file system storage for files handled by django-compressor.
 
@@ -24,17 +28,8 @@ class CompressorFileStorage(FileSystemStorage):
             location = settings.COMPRESS_ROOT
         if base_url is None:
             base_url = settings.COMPRESS_URL
-        super(CompressorFileStorage, self).__init__(location, base_url,
+        super(CompressorFileStorage, self).__init__(# location, base_url,
                                                     *args, **kwargs)
-
-    def accessed_time(self, name):
-        return datetime.fromtimestamp(os.path.getatime(self.path(name)))
-
-    def created_time(self, name):
-        return datetime.fromtimestamp(os.path.getctime(self.path(name)))
-
-    def modified_time(self, name):
-        return datetime.fromtimestamp(os.path.getmtime(self.path(name)))
 
     def get_available_name(self, name):
         """
@@ -54,6 +49,15 @@ class CompressorFileStorage(FileSystemStorage):
         except OSError as e:
             if e.errno != errno.ENOENT:
                 raise
+        finally:
+            storage_cache.delete('django_compressor:%s' % md5(name).hexdigest())
+
+    def modified_time(self, name):
+        mt = storage_cache.get('django_compressor:%s' % md5(name).hexdigest())
+        if mt is None:
+            mt = StorageFromSettings.modified_time(self, name)
+            storage_cache.set('django_compressor:%s' % md5(name).hexdigest(), mt)
+        return mt
 
 
 compressor_file_storage = SimpleLazyObject(

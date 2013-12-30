@@ -23,6 +23,8 @@ from compressor.signals import post_compress
 from compressor.utils import get_class, get_mod_func, staticfiles
 from compressor.utils.decorators import cached_property
 
+from StringIO import StringIO
+
 # Some constants for nicer handling.
 SOURCE_HUNK, SOURCE_FILE = 'inline', 'file'
 METHOD_INPUT, METHOD_OUTPUT = 'input', 'output'
@@ -107,50 +109,21 @@ class Compressor(object):
         parts.extend([get_hexdigest(content, 12), self.type])
         return os.path.join(self.output_dir, self.output_prefix, '.'.join(parts))
 
-    def get_filename(self, basename):
-        """
-        Returns full path to a file, for example:
-
-        get_filename('css/one.css') -> '/full/path/to/static/css/one.css'
-        """
-        filename = None
-        # first try finding the file in the root
-        try:
-            # call path first so remote storages don't make it to exists,
-            # which would cause network I/O
-            filename = self.storage.path(basename)
-            if not self.storage.exists(basename):
-                filename = None
-        except NotImplementedError:
-            # remote storages don't implement path, access the file locally
-            if compressor_file_storage.exists(basename):
-                filename = compressor_file_storage.path(basename)
-        # secondly try to find it with staticfiles (in debug mode)
-        if not filename and self.finders:
-            filename = self.finders.find(url2pathname(basename))
-        if filename:
-            return filename
-        # or just raise an exception as the last resort
-        raise UncompressableFileError(
-            "'%s' could not be found in the COMPRESS_ROOT '%s'%s" %
-            (basename, settings.COMPRESS_ROOT,
-             self.finders and " or with staticfiles." or "."))
-
     def get_filecontent(self, filename, charset):
         """
         Reads file contents using given `charset` and returns it as text.
         """
-        with codecs.open(filename, 'r', charset) as fd:
-            try:
-                return fd.read()
-            except IOError as e:
-                raise UncompressableFileError("IOError while processing "
-                                              "'%s': %s" % (filename, e))
-            except UnicodeDecodeError as e:
-                raise UncompressableFileError("UnicodeDecodeError while "
-                                              "processing '%s' with "
-                                              "charset %s: %s" %
-                                              (filename, charset, e))
+        
+        try:
+            return codecs.decode(self.storage.open(filename).read(), charset)
+        except IOError as e:
+            raise UncompressableFileError("IOError while processing "
+                                          "'%s': %s" % (filename, e))
+        except UnicodeDecodeError as e:
+            raise UncompressableFileError("UnicodeDecodeError while "
+                                          "processing '%s' with "
+                                          "charset %s: %s" %
+                                          (filename, charset, e))
 
     @cached_property
     def parser(self):
@@ -162,7 +135,7 @@ class Compressor(object):
 
     @cached_property
     def mtimes(self):
-        return [str(get_mtime(value))
+        return [str(get_mtime(value, self.storage))
                 for kind, value, basename, elem in self.split_contents()
                 if kind == SOURCE_FILE]
 
