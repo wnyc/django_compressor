@@ -27,3 +27,7 @@ class JsCompressor(Compressor):
                 content = self.parser.elem_content(elem)
                 self.split_content.append((SOURCE_HUNK, content, None, elem))
         return self.split_content
+
+    def get_cached_filenames(self):
+        filenames = tuple(filename.get('attrs_dict', {}).get('src','') for filename in self.parser.js_elems())
+        return filenames

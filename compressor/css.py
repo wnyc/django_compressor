@@ -51,3 +51,7 @@ class CssCompressor(Compressor):
                     ret.append(subnode.output(*args, **kwargs))
                 return ''.join(ret)
         return super(CssCompressor, self).output(*args, **kwargs)
+
+    def get_cached_filenames(self):
+        filenames = tuple(filename.get('attrs_dict', {}).get('href','') for filename in self.parser.css_elems())
+        return filenames

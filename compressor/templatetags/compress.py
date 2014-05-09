@@ -108,6 +108,9 @@ class CompressorMixin(object):
             rendered_output = self.render_output(compressor, mode, forced=forced)
             if cache_key:
                 cache_set(cache_key, rendered_output)
+            if mode == OUTPUT_FILE:
+                cached_files = self.get_cached_filenames(compressor)
+                cache_set(cached_files, cache_key)
             return rendered_output
         except Exception:
             if settings.DEBUG or forced:
