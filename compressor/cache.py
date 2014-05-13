@@ -31,6 +31,8 @@ def simple_cachekey(key):
 def socket_cachekey(key):
     return 'django_compressor.%s.%s' % (socket.gethostname(), force_text(key))
 
+def filename_list_cachekey(key):
+    return 'django_compressor_filename_list.%s' (force_text(key))
 
 def get_cachekey(*args, **kwargs):
     global _cachekey_func

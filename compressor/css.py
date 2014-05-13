@@ -53,5 +53,10 @@ class CssCompressor(Compressor):
         return super(CssCompressor, self).output(*args, **kwargs)
 
     def get_cached_filenames(self):
-        filenames = tuple(filename.get('attrs_dict', {}).get('href','') for filename in self.parser.css_elems())
-        return filenames
+        import hashlib
+        from django.utils.encoding import smart_bytes
+        filenames = tuple(filename.get('attrs_dict', {}).get('href','')\
+                for filename in self.parser.css_elems())
+        digest = hashlib.md5(smart_bytes(filenames)).hexdigest()
+        print('here they %s' % (digest,))
+        return digest

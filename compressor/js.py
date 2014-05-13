@@ -29,5 +29,10 @@ class JsCompressor(Compressor):
         return self.split_content
 
     def get_cached_filenames(self):
-        filenames = tuple(filename.get('attrs_dict', {}).get('src','') for filename in self.parser.js_elems())
-        return filenames
+        import hashlib
+        from django.utils.encoding import smart_bytes
+        filenames = tuple(filename.get('attrs_dict', {}).get('src','')\
+                for filename in self.parser.js_elems())
+        digest = hashlib.md5(smart_bytes(filenames)).hexdigest()
+        print('here they %s' % (digest,))
+        return digest
