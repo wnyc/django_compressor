@@ -32,7 +32,7 @@ def socket_cachekey(key):
     return 'django_compressor.%s.%s' % (socket.gethostname(), force_text(key))
 
 def filename_list_cachekey(key):
-    return 'django_compressor_filename_list.%s' (force_text(key))
+    return 'django_compressor.filename_list.%s.%s' % (kind, compressor.get_filenames_digest())
 
 def get_cachekey(*args, **kwargs):
     global _cachekey_func
@@ -95,6 +95,9 @@ def get_templatetag_cachekey(compressor, mode, kind):
     return get_cachekey(
         "templatetag.%s.%s.%s" % (compressor.cachekey, mode, kind))
 
+def get_filehash_cachekey(compressor, mode, kind):
+    return get_cachekey(
+        "filehash.%s.%s" % (kind, compressor.get_cached_filenames_digest()))
 
 def get_mtime(filename, storage_server):
     if settings.COMPRESS_MTIME_DELAY:

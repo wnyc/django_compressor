@@ -3,7 +3,8 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils import six
 
 from compressor.cache import (cache_get, cache_set, get_offline_hexdigest,
-                              get_offline_manifest, get_templatetag_cachekey)
+                              get_offline_manifest, get_templatetag_cachekey,
+                              get_filehash_cachekey)
 from compressor.conf import settings
 from compressor.exceptions import OfflineGenerationError
 from compressor.utils import get_class
@@ -78,9 +79,17 @@ class CompressorMixin(object):
         and return a tuple of cache key and output
         """
         if settings.COMPRESS_ENABLED and not forced:
-            cache_key = get_templatetag_cachekey(compressor, mode, kind)
-            cache_content = cache_get(cache_key)
-            return cache_key, cache_content
+            #Check if the templatetag cachekey is available at the key
+            #which is genereated from a hash of the filenames requested.
+            #If this key is available, we assume that the compressed files
+            #are available at the S3 locations in the transformed html 
+            #stored at the templatetag cachekey
+            #I am not sure if this is invaliding properly.
+            filehash_cachekey = get_filehash_cachekey(compressor, kind)
+            templatetag_cachekey = cache_get(filehash_cachekey)
+            if templatetag_cachekey:
+                return templatetag_cachekey, cache_get(templatetag_cachekey)
+            return get_templatetag_cachekey(compressor, mode, kind), None
         return None, None
 
     def render_compressed(self, context, kind, mode, forced=False):
@@ -109,8 +118,8 @@ class CompressorMixin(object):
             if cache_key:
                 cache_set(cache_key, rendered_output)
             if mode == OUTPUT_FILE:
-                cached_files = self.get_cached_filenames(compressor)
-                cache_set(cached_files, cache_key)
+                cached_files_hash = get_filehash_cachekey(compressor, kind)
+                cache_set(cached_files_hash, cache_key)
             return rendered_output
         except Exception:
             if settings.DEBUG or forced:

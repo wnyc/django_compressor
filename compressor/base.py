@@ -109,6 +109,12 @@ class Compressor(object):
         parts.extend([get_hexdigest(content, 12), self.type])
         return os.path.join(self.output_dir, self.output_prefix, '.'.join(parts))
 
+    def get_cached_filenames(self):
+        raise NotImplementedError
+
+    def get_cached_filenames_digest(self):
+        return get_hexdigest(self.get_cached_filenames, 12)
+
     def get_filecontent(self, filename, charset):
         """
         Reads file contents using given `charset` and returns it as text.

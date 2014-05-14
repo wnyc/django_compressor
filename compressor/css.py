@@ -52,11 +52,8 @@ class CssCompressor(Compressor):
                 return ''.join(ret)
         return super(CssCompressor, self).output(*args, **kwargs)
 
+class S3CssCompressor(CssCompressor):
     def get_cached_filenames(self):
-        import hashlib
-        from django.utils.encoding import smart_bytes
         filenames = tuple(filename.get('attrs_dict', {}).get('href','')\
                 for filename in self.parser.css_elems())
-        digest = hashlib.md5(smart_bytes(filenames)).hexdigest()
-        print('here they %s' % (digest,))
-        return digest
+        return filenames
