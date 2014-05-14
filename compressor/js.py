@@ -1,5 +1,5 @@
 from compressor.conf import settings
-from compressor.base import Compressor, SOURCE_HUNK, SOURCE_FILE
+from compressor.base import Compressor, SOURCE_HUNK, SOURCE_FILE, get_hexdigest
 
 
 class JsCompressor(Compressor):
@@ -29,7 +29,11 @@ class JsCompressor(Compressor):
         return self.split_content
 
 class S3JsCompressor(JsCompressor):
+
     def get_cached_filenames(self):
         filenames = tuple(filename.get('attrs_dict', {}).get('src','')\
                 for filename in self.parser.js_elems())
         return filenames
+
+    def get_cached_filenames_digest(self):
+        return get_hexdigest(self.get_cached_filenames(), 12)

@@ -95,7 +95,7 @@ def get_templatetag_cachekey(compressor, mode, kind):
     return get_cachekey(
         "templatetag.%s.%s.%s" % (compressor.cachekey, mode, kind))
 
-def get_filehash_cachekey(compressor, mode, kind):
+def get_filehash_cachekey(compressor, kind):
     return get_cachekey(
         "filehash.%s.%s" % (kind, compressor.get_cached_filenames_digest()))
 

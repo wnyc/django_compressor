@@ -1,4 +1,4 @@
-from compressor.base import Compressor, SOURCE_HUNK, SOURCE_FILE
+from compressor.base import Compressor, SOURCE_HUNK, SOURCE_FILE, get_hexdigest
 from compressor.conf import settings
 
 
@@ -53,7 +53,11 @@ class CssCompressor(Compressor):
         return super(CssCompressor, self).output(*args, **kwargs)
 
 class S3CssCompressor(CssCompressor):
+
     def get_cached_filenames(self):
         filenames = tuple(filename.get('attrs_dict', {}).get('href','')\
                 for filename in self.parser.css_elems())
         return filenames
+
+    def get_cached_filenames_digest(self):
+        return get_hexdigest(self.get_cached_filenames(), 12)
