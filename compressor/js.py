@@ -31,5 +31,5 @@ class JsCompressor(Compressor):
 class S3JsCompressor(JsCompressor):
     def get_cached_filenames(self):
         filenames = tuple(filename.get('attrs_dict', {}).get('src','')\
-                for filename in self.parser.css_elems())
+                for filename in self.parser.js_elems())
         return filenames
